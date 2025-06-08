@@ -1,0 +1,26 @@
+{% extends 'base.html' %}
+
+{% block title %}Доступні курси{% endblock %}
+
+{% block content %}
+<h2>Доступні курси</h2>
+
+{% if courses %}
+    <ul class="list-group mt-3">
+        {% for course in courses %}
+            <li class="list-group-item d-flex justify-content-between align-items-center">
+                <div>
+                    <strong>{{ course.title }}</strong><br>
+                    {{ course.description|linebreaks }}
+                </div>
+                <form method="post" action="{% url 'courses:enroll' course.id %}">
+                    {% csrf_token %}
+                    <button type="submit" class="btn btn-outline-primary btn-sm">Записатися</button>
+                </form>
+            </li>
+        {% endfor %}
+    </ul>
+{% else %}
+    <p class="text-muted">Усі курси вже записані.</p>
+{% endif %}
+{% endblock %}

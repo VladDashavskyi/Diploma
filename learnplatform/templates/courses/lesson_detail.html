@@ -1,0 +1,47 @@
+{% extends 'base.html' %}
+
+{% block title %}{{ lesson.title }}{% endblock %}
+
+{% block content %}
+<h2>{{ lesson.title }}</h2>
+
+{% if lesson.video_url %}
+    <div class="ratio ratio-16x9 mb-3" style="max-width: 600px; margin: 0 auto;">
+        <iframe
+            src="{{ lesson.video_url }}"
+            title="Відео"
+            allowfullscreen
+            style="border: none;"
+        ></iframe>
+    </div>
+
+    <p class="text-muted">
+        Якщо відео не відображається, відкрийте його за
+        <a href="{{ lesson.video_url }}" target="_blank">цим посиланням</a>.
+    </p>
+{% endif %}
+
+<div class="mb-3">
+    {{ lesson.content|linebreaks }}
+</div>
+
+{% if user.is_teacher and course.teacher == user and not lesson.quiz %}
+    <a href="{% url 'quizzes:create' lesson.id %}" class="btn btn-outline-success">
+        ➕ Створити тест
+    </a>
+{% endif %}
+
+{% if user.is_teacher and course.teacher == user and lesson.quiz %}
+    <a href="{% url 'quizzes:edit' lesson.id %}" class="btn btn-outline-secondary">
+        ✏️ Редагувати тест
+    </a>
+{% endif %}
+
+{% if not user.is_teacher and lesson.quiz %}
+    <a href="{% url 'quizzes:take' lesson.id %}" class="btn btn-outline-primary">
+        📝 Пройти тест
+    </a>
+{% endif %}
+
+<a href="{% url 'courses:detail' course.id %}" class="btn btn-secondary">← Назад до курсу</a>
+{% endblock %}

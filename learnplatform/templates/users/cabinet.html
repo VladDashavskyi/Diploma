@@ -1,0 +1,150 @@
+{% extends 'base.html' %}
+
+{% block title %}Кабінет користувача{% endblock %}
+
+{% block content %}
+<h1 class="mb-4">Привіт, {{ user.username }}!</h1>
+
+{% if user.is_student and stats %}
+    <div class="alert alert-info">
+        📊 Пройдено тестів: <strong>{{ stats.completed }}</strong> з <strong>{{ stats.total }}</strong><br>
+        ✅ Середній результат: <strong>{{ stats.success }}%</strong>
+    </div>
+{% endif %}
+
+
+{% if user.is_teacher %}
+    <p>Ви викладач. Нижче список ваших курсів:</p>
+{% else %}
+    <p>Ви студент. Ви записані на такі курси:</p>
+{% endif %}
+
+{% if user.is_authenticated and user.is_teacher %}
+    <a class="btn btn-sm btn-outline-primary ms-3" href="{% url 'courses:create' %}">
+       ➕ Додати курс
+    </a>
+{% endif %}
+
+{% if courses %}
+    <ul class="list-group mt-3">
+        {% for course in courses %}
+            <li class="list-group-item">
+                <div class="d-flex justify-content-between align-items-start">
+                    <div>
+                        <strong><a href="{% url 'courses:detail' course.id %}">{{ course.title }}</a></strong>
+                        {{ course.description|linebreaks }}
+                    </div>
+                    {% if user.is_teacher %}
+                        <a href="{% url 'courses:add_lesson' course.id %}" class="btn btn-sm btn-outline-primary ms-3">
+                            ➕ Додати урок
+                        </a>
+                    {% endif %}
+                </div>
+            </li>
+        {% endfor %}
+    </ul>
+{% else %}
+    <p class="text-muted">Немає курсів.</p>
+{% endif %}
+{% if user.is_student %}
+    <a href="{% url 'courses:available' %}" class="btn btn-outline-success mt-3">
+        📚 Доступні курси
+    </a>
+{% endif %}
+
+{% if user.is_student and quiz_attempts %}
+    <hr class="my-4">
+    <h4>
+        📝 Історія тестів
+        <a href="{% url 'users:student_report_pdf' %}" class="btn btn-outline-danger">
+            ⬇️ Завантажити звіт PDF
+        </a>
+    </h4>
+    <table class="table table-sm table-striped mt-3">
+        <thead>
+            <tr>
+                <th>Курс</th>
+                <th>Урок</th>
+                <th>Тест</th>
+                <th>Результат</th>
+                <th>Дата</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for attempt in quiz_attempts %}
+                <tr>
+                    <td>
+                        <a href="{% url 'courses:detail' attempt.quiz.lesson.course.id %}">
+                            {{ attempt.quiz.lesson.course.title }}
+                        </a>
+                    </td>
+                    <td>
+                        <a href="{% url 'courses:lesson_detail' attempt.quiz.lesson.course.id attempt.quiz.lesson.id %}">
+                            {{ attempt.quiz.lesson.title }}
+                        </a>
+                    </td>
+                    <td>{{ attempt.quiz.title }}</td>
+                    <td>{{ attempt.score }}%</td>
+                    <td>{{ attempt.completed_at|date:"Y-m-d H:i" }}</td>
+                </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+{% elif user.is_student %}
+    <hr class="my-4">
+    <h4>📝 Історія тестів</h4>
+    <p class="text-muted">Ви ще не проходили жодного тесту.</p>
+{% endif %}
+
+{% if recommendations %}
+<hr class="my-4">
+<h4>🧠 Рекомендації для повторення</h4>
+<ul class="list-group">
+    {% for lesson, count in recommendations %}
+        <li class="list-group-item d-flex justify-content-between align-items-center">
+            <a href="{% url 'courses:lesson_detail' lesson.course.id lesson.id %}">
+                {{ lesson.title }}
+            </a>
+            <span class="badge bg-warning text-dark">✖ {{ count }} помилок</span>
+        </li>
+    {% endfor %}
+</ul>
+{% endif %}
+
+{% if user.is_student and detailed_recommendations %}
+<hr class="my-5">
+<h4>🧠 Деталізовані рекомендації по темах</h4>
+<p class="text-muted">На основі ваших неправильних відповідей у тестах:</p>
+
+<div class="accordion" id="recommendationsAccordion">
+    {% for key, questions in detailed_recommendations.items %}
+        {% with lesson_id=key.0 lesson_title=key.1 course_id=key.2 course_title=key.3 %}
+            <div class="accordion-item">
+                <h2 class="accordion-header" id="heading-{{ lesson_id }}">
+                    <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse"
+                            data-bs-target="#collapse-{{ lesson_id }}" aria-expanded="false"
+                            aria-controls="collapse-{{ lesson_id }}">
+                        {{ course_title }} — {{ lesson_title }}
+                    </button>
+                </h2>
+                <div id="collapse-{{ lesson_id }}" class="accordion-collapse collapse"
+                     aria-labelledby="heading-{{ lesson_id }}" data-bs-parent="#recommendationsAccordion">
+                    <div class="accordion-body">
+                        <p class="mb-1"><strong>Зверніть увагу на такі запитання:</strong></p>
+                        <ul class="mb-3">
+                            {% for q in questions %}
+                                <li>{{ q }}</li>
+                            {% endfor %}
+                        </ul>
+                        <a href="{% url 'courses:lesson_detail' course_id lesson_id %}" class="btn btn-sm btn-outline-primary">
+                            📘 Повторити тему
+                        </a>
+                    </div>
+                </div>
+            </div>
+        {% endwith %}
+    {% endfor %}
+{% endif %}
+
+{% endblock %}
+

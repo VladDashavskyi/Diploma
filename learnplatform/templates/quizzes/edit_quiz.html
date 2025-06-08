@@ -1,0 +1,27 @@
+{% extends 'base.html' %}
+
+{% block title %}Редагування тесту{% endblock %}
+
+{% block content %}
+<h2>Редагування тесту: {{ quiz.title }}</h2>
+
+<form method="post">
+    {% csrf_token %}
+    {{ formset.management_form }}
+    {% for form in formset %}
+        <div class="card mb-3 p-3">
+            {{ form.id }}
+            {{ form.text.label }} {{ form.text }}
+            {% if form.instance.id %}
+                <a href="{% url 'quizzes:edit_answers' form.instance.id %}" class="btn btn-sm btn-outline-secondary mt-2">
+                    ✏️ Редагувати відповіді
+                </a>
+            {% endif %}
+        </div>
+    {% endfor %}
+    <button type="submit" class="btn btn-success">Зберегти запитання</button>
+</form>
+
+<hr>
+<a href="{% url 'courses:lesson_detail' quiz.lesson.course.id quiz.lesson.id %}" class="btn btn-secondary mt-3">← Назад до уроку</a>
+{% endblock %}

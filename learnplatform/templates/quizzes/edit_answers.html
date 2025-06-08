@@ -1,0 +1,23 @@
+{% extends 'base.html' %}
+{% block title %}Варіанти відповіді{% endblock %}
+
+{% block content %}
+<h2>Варіанти до запитання:</h2>
+<p class="mb-3"><strong>{{ question.text }}</strong></p>
+
+<form method="post">
+    {% csrf_token %}
+    {{ formset.management_form }}
+    {% for form in formset %}
+        <div class="card mb-3 p-3">
+            {{ form.id }}
+            {{ form.text.label }} {{ form.text }}
+            {{ form.is_correct.label }} {{ form.is_correct }}
+        </div>
+    {% endfor %}
+    <button type="submit" class="btn btn-success">Зберегти</button>
+</form>
+
+<hr>
+<a href="{% url 'quizzes:edit' question.quiz.lesson.id %}" class="btn btn-secondary mt-3">← Назад до тесту</a>
+{% endblock %}

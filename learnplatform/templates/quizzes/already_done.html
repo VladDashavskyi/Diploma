@@ -1,0 +1,33 @@
+{% extends 'base.html' %}
+{% block title %}Тест уже пройдено{% endblock %}
+
+{% block content %}
+<h2>Тест "{{ quiz.title }}"</h2>
+
+{% if score > 0 %}
+    <p>Ви вже проходили цей тест.</p>
+    <p>Ваш результат: <strong>{{ score }}%</strong></p>
+    <a href="{% url 'users:cabinet' %}" class="btn btn-secondary mt-3">← Назад до кабінету</a>
+{% else %}
+    <p>Ваш попередній результат: <strong>0%</strong></p>
+    <p>Ви можете пройти тест ще раз:</p>
+    <form method="post">
+        {% csrf_token %}
+        <button type="submit" class="btn btn-primary">🔁 Повторити тест</button>
+    </form>
+{% endif %}
+
+{% if user.is_student %}
+    {% if not request_already_sent %}
+        <form method="post" action="{% url 'quizzes:request_retake' lesson.id %}">
+            {% csrf_token %}
+            <button type="submit" class="btn btn-outline-warning mt-3">
+                🔁 Запросити повторну спробу
+            </button>
+        </form>
+    {% else %}
+        <p class="text-muted mt-3">⏳ Запит на повторну спробу вже надіслано. Очікується схвалення викладачем.</p>
+    {% endif %}
+{% endif %}
+
+{% endblock %}

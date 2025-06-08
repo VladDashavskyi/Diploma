@@ -1,0 +1,91 @@
+
+{% extends 'base.html' %}
+
+{% block title %}{{ course.title }}{% endblock %}
+
+{% block content %}
+
+{% load dict_extras %}
+
+<h2>{{ course.title }}</h2>
+<p>{{ course.description|linebreaks }}</p>
+
+<h4 class="mt-4">Уроки:</h4>
+
+{% if lessons %}
+    <ol class="list-group list-group-numbered">
+        {% for lesson in lessons %}
+            <li class="list-group-item">
+                <a href="{% url 'courses:lesson_detail' course.id lesson.id %}">
+                    {{ lesson.title }}
+                </a>
+            </li>
+        {% endfor %}
+    </ol>
+{% else %}
+    <p class="text-muted">Ще немає уроків.</p>
+{% endif %}
+
+{% if user.is_teacher and user == course.teacher %}
+    <a href="{% url 'courses:add_lesson' course.id %}" class="btn btn-outline-primary mt-3">
+        ➕ Додати урок
+    </a>
+{% endif %}
+{% if user.is_authenticated and user.is_student and user not in course.students.all %}
+    <form method="post" action="{% url 'courses:enroll' course.id %}">
+        {% csrf_token %}
+        <button type="submit" class="btn btn-primary mt-3">Записатися на курс</button>
+    </form>
+{% elif user.is_student %}
+    <p class="text-success mt-3">Ви вже записані на цей курс ✅</p>
+{% endif %}
+
+{% if user.is_teacher and gradebook %}
+<hr class="my-5">
+<h4>
+    📊 Журнал успішності
+    <a href="{% url 'courses:export_excel' course.id %}" class="btn btn-outline-success">
+        ⬇️ Експортувати в Excel
+    </a>
+</h4>
+{% endif %}
+
+{% if gradebook %}
+<table class="table table-bordered table-sm align-middle text-center">
+    <thead class="table-light">
+        <tr>
+            <th>Студент</th>
+            {% for lesson in quiz_lessons %}
+                <th>{{ lesson.title }}</th>
+            {% endfor %}
+        </tr>
+    </thead>
+    <tbody>
+        {% for row in gradebook %}
+        <tr>
+            <td class="text-start">{{ row.student.username }}</td>
+            {% for score_obj in row.lesson_scores %}
+                <td class="text-center">
+                    {% if score_obj.score is not None %}
+                        <span class="score fw-bold">{{ score_obj.score }}%</span>
+                    {% endif %}
+                    {% if score_obj.retake_request_id %}
+                        <form method="post" action="{% url 'quizzes:approve_retake' score_obj.retake_request_id %}" class="d-inline">
+                            {% csrf_token %}
+                            <button type="submit" class="btn btn-sm btn-outline-success ms-2">✅ Схвалити</button>
+                        </form>
+                    {% elif score_obj.score is None and not score_obj.retake_request_id %}
+                        <span class="text-muted">—</span>
+                    {% endif %}
+                </td>
+            {% endfor %}
+        </tr>
+        {% endfor %}
+    </tbody>
+</table>
+{% else %}
+    <!-- Можна показати інший контент для студентів або повідомлення -->
+    <p>Оцінки поки що не доступні.</p>
+{% endif %}
+
+{% endblock %}
